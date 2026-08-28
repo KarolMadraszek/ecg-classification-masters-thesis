@@ -1,7 +1,27 @@
+# Wykluczenie danych i duzych plikow binarnych
+data/
+*.h5
+*.hdf5
+*.dat
+*.hea
+*.zip
+
+# Wykluczenie zapisanych modeli i punktow kontrolnych
+models/
+*.keras
+*.weights.h5
+
 # Byte-compiled / optimized / DLL files
+venv/
+.env
 __pycache__/
 *.py[codz]
 *$py.class
+*.pyc
+.ipynb_checkpoints/
+
+# TensorBoard logs
+logs/
 
 # C extensions
 *.so
