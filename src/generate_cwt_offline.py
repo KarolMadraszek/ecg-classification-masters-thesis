@@ -42,8 +42,8 @@ def process_and_save_cwt(input_h5_path, output_h5_path):
 if __name__ == '__main__':
     base_dir = Path(__file__).resolve().parent.parent
 
-    input_file = base_dir / 'data' / 'processed' / 'signals_100hz_DEV.h5'
-    output_file = base_dir / 'data' / 'processed' / 'cwt_scalograms_DEV.h5'
+    input_file = base_dir / 'data' / 'processed' / 'signals_100hz_FULL.h5'
+    output_file = base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
 
     if not input_file.exists():
         print(f"Błąd: Nie znaleziono pliku wejściowego {input_file}")

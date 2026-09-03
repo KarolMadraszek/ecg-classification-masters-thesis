@@ -64,15 +64,14 @@ def build_signal_dataset(
 
 
 if __name__ == "__main__":
-    build_signal_dataset(
-        output_path='../data/processed/signals_100hz_DEV.h5',
-        dev_mode=True
-    )
+  #  build_signal_dataset(
+  #      output_path='../data/processed/signals_100hz_DEV.h5',
+  #      dev_mode=True
+  #  )
 
-    # Opcja 2: Docelowe, pełne przetwarzanie (Odkomentuj, gdy kod będzie gotowy)
-    # build_signal_dataset(
-    #    output_path='data/processed/signals_100hz_FULL.h5',
-    #    dev_mode=False
-    # )
+    build_signal_dataset(
+       output_path='../data/processed/signals_100hz_FULL.h5',
+       dev_mode=False
+    )
 
 
