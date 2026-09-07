@@ -71,7 +71,7 @@ if __name__ == '__main__':
     model.summary()
 
     print("\nTest przepływu danych")
-    # "Fałszywey" pacjenta (losowy szum) symulującego surowe wejście (1000, 12)
+    # "Fałszywy" pacjenta (losowy szum) symulującego surowe wejście (1000, 12)
     dummy_patient = np.random.randn(1000, 12)
 
     cwt_tensor = convert_patient_to_tensor(dummy_patient)
