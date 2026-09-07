@@ -1,5 +1,4 @@
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
@@ -12,26 +11,33 @@ from src.data_generator import CWTDataGenerator
 from src.baseline_cnn import build_baseline_cnn
 from src.transfer_models import build_transfer_model
 
-
 def main():
     parser = argparse.ArgumentParser(description="Trening modeli na skalogramach CWT.")
     parser.add_argument('--model', type=str, required=True,
                         choices=['baseline', 'resnet50v2', 'efficientnetb0', 'mobilenetv2', 'densenet121'],
-                        help="Wybierz architekturę do wyuczenia")
+                        help="Proszę wybrać architekturę do uczenia")
     parser.add_argument('--epochs', type=int, default=15, help="Maksymalna liczba epok")
     parser.add_argument('--batch_size', type=int, default=32, help="Rozmiar paczki")
-    parser.add_argument('--dev', action='store_true', help="Proszę małego pliku _DEV.h5 do testu")
+    parser.add_argument('--dev', action='store_true', help="Proszę użyć małego pliku _DEV.h5 do testu")
+    parser.add_argument('--data_path', type=str, default=None, help="Opcjonalna ścieżka do pliku .h5 (np. na Kaggle)")
     args = parser.parse_args()
 
     base_dir = Path(__file__).resolve().parent
     models_dir = base_dir / 'models'
     models_dir.mkdir(exist_ok=True)
 
-    if args.dev:
+    if args.data_path:
+        h5_path = Path(args.data_path)
+    elif args.dev:
         h5_path = base_dir / 'data' / 'processed' / 'cwt_scalograms_DEV.h5'
         print("\nTRYB DEV")
     else:
-        h5_path = base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
+        kaggle_paths = list(Path('/kaggle/input').rglob('cwt_scalograms_FULL.h5'))
+        if kaggle_paths:
+            h5_path = kaggle_paths[0]
+            print("\nAutomatycznie wykryto plik na Kaggle!")
+        else:
+            h5_path = base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
 
     if not h5_path.exists():
         raise FileNotFoundError(f"Błąd: Nie znaleziono pliku z danymi {h5_path}")
@@ -64,7 +70,7 @@ def main():
     with open(history_path, 'wb') as f:
         pickle.dump(history.history, f)
 
-    print(f"\nTrening pomyślnie zakończony! Najlepsze wagi zapisano jako:\n{model_save_path}")
+    print(f"\nTrening pomyślnie zakończony. Najlepsze wagi zapisano jako:\n{model_save_path}")
 
 if __name__ == '__main__':
     main()
