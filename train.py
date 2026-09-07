@@ -35,7 +35,7 @@ def main():
         kaggle_paths = list(Path('/kaggle/input').rglob('cwt_scalograms_FULL.h5'))
         if kaggle_paths:
             h5_path = kaggle_paths[0]
-            print("\nAutomatycznie wykryto plik na Kaggle!")
+            print("\nAutomatycznie wykryto plik na Kaggle")
         else:
             h5_path = base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
 
@@ -63,7 +63,9 @@ def main():
         train_gen,
         validation_data=val_gen,
         epochs=args.epochs,
-        callbacks=callbacks
+        callbacks=callbacks,
+        workers = 4,
+        use_multiprocessing = True
     )
 
     history_path = models_dir / f"history_{args.model}.pkl"
