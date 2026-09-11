@@ -1,20 +1,21 @@
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-import argparse
-from pathlib import Path
 import h5py
 import numpy as np
+import pandas as pd
+import tensorflow as tf
 import matplotlib.pyplot as plt
 import seaborn as sns
-import tensorflow as tf
-from sklearn.metrics import roc_auc_score, classification_report, multilabel_confusion_matrix
+from pathlib import Path
+from sklearn.metrics import roc_auc_score, f1_score, recall_score, hamming_loss, multilabel_confusion_matrix
 
 CLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
 
 class H5MemorySafeGenerator(tf.keras.utils.Sequence):
-    def __init__(self, h5_path, split, batch_size=32):
+    def __init__(self, h5_path, split='test', batch_size=64):
         self.h5_path = h5_path
         self.split = split
         self.batch_size = batch_size
@@ -33,73 +34,81 @@ class H5MemorySafeGenerator(tf.keras.utils.Sequence):
         return X_batch, y_batch
 
 def main():
-    parser = argparse.ArgumentParser(description="Ewaluacja modeli na zbiorze testowym.")
-    parser.add_argument('--model', type=str, required=True,
-                        choices=['baseline', 'resnet50v2', 'efficientnetb0', 'mobilenetv2', 'densenet121'])
-    parser.add_argument('--batch_size', type=int, default=64)
-    parser.add_argument('--data_path', type=str, default=None)
-    args = parser.parse_args()
-
     base_dir = Path(__file__).resolve().parent
+    h5_path = base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
     models_dir = base_dir / 'models'
 
-    if args.data_path:
-        h5_path = Path(args.data_path)
-    else:
-        kaggle_paths = list(Path('/kaggle/input').rglob('cwt_scalograms_FULL.h5'))
-        h5_path = kaggle_paths[0] if kaggle_paths else base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
-
     if not h5_path.exists():
-        raise FileNotFoundError(f"Brak pliku danych: {h5_path}")
-
-    model_path = models_dir / f"best_{args.model}.keras"
-    if not model_path.exists():
-        raise FileNotFoundError(f"Brak zapisanego modelu: {model_path}")
-
-    print(f"Używany plik danych: {h5_path}")
-    print(f"Ładowanie wag modelu z: {model_path}")
-    model = tf.keras.models.load_model(model_path)
-
-    print("Przygotowywanie generatora zbioru testowego")
-    test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=args.batch_size)
-
-    print("Wykonywanie predykcji na zbiorze testowym")
-    y_pred_prob = model.predict(test_gen, verbose=1)
+        print(f"Brak pliku danych: {h5_path}")
+        return
 
     with h5py.File(h5_path, 'r') as f:
         y_true = f['test']['y'][:]
 
-    y_pred_prob = y_pred_prob[:len(y_true)]
+    test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64)
 
-    print("\n" + "="*50)
-    print("Wyniki ROC-AUC")
-    print("="*50)
-    aucs = []
-    for i, name in enumerate(CLASSES):
-        auc = roc_auc_score(y_true[:, i], y_pred_prob[:, i])
-        aucs.append(auc)
-        print(f" Klasa {name.ljust(6)}: {auc:.4f}")
-    print(f" Średnie macro ROC-AUC: {np.mean(aucs):.4f}")
+    model_files = {
+        'Baseline': models_dir / "best_baseline.keras",
+        'DenseNet121': models_dir / "best_densenet121.keras",
+        'MobileNetV2': models_dir / "best_mobilenetv2.keras",
+        'ResNet50v2': models_dir / "best_resnet50v2.keras",
+        'EfficientNetB0': models_dir / "best_efficientnetb0.keras"
+    }
 
-    print("\n" + "="*50)
-    print("Raport klasyfikacji (próg = 0.5)")
-    print("="*50)
-    y_pred_bin = (y_pred_prob > 0.5).astype(int)
-    print(classification_report(y_true, y_pred_bin, target_names=CLASSES, zero_division=0))
+    results = []
 
-    # Wykres macierzy pomyłek dla klas wieloetykietowych
-    mcm = multilabel_confusion_matrix(y_true, y_pred_bin)
-    fig, axes = plt.subplots(1, 5, figsize=(22, 4))
-    for ax, matrix, name in zip(axes, mcm, CLASSES):
-        sns.heatmap(matrix, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax)
-        ax.set_title(f'Klasa: {name}', fontsize=12)
-        ax.set_xlabel('Predykcja')
-        ax.set_ylabel('Rzeczywistość')
+    for name, path in model_files.items():
+        if not path.exists():
+            print(f"Pominięto model {name}: brak pliku wag w {path}")
+            continue
 
-    plt.tight_layout()
-    out_img = models_dir / f"confusion_matrix_{args.model}.png"
-    plt.savefig(out_img, dpi=300)
-    print(f"\nMacierz pomyłek zapisano jako wykres: {out_img}")
+        print(f"Ewaluacja modelu: {name}")
+        model = tf.keras.models.load_model(path)
+        y_pred_prob = model.predict(test_gen, verbose=0)[:len(y_true)]
+        y_pred_bin = (y_pred_prob >= 0.5).astype(int)
+
+        auc = roc_auc_score(y_true, y_pred_prob, average='macro')
+        macro_f1 = f1_score(y_true, y_pred_bin, average='macro', zero_division=0)
+        macro_rec = recall_score(y_true, y_pred_bin, average='macro', zero_division=0)
+        hl = hamming_loss(y_true, y_pred_bin)
+        recalls_per_class = recall_score(y_true, y_pred_bin, average=None, zero_division=0)
+
+        row = {
+            'Model': name,
+            'Macro_ROC_AUC': round(auc, 4),
+            'Macro_F1': round(macro_f1, 4),
+            'Macro_Recall': round(macro_rec, 4),
+            'Hamming_Loss': round(hl, 4)
+        }
+
+        for idx, cls in enumerate(CLASSES):
+            row[f'Recall_{cls}'] = round(recalls_per_class[idx], 4)
+
+        results.append(row)
+
+        mcm = multilabel_confusion_matrix(y_true, y_pred_bin)
+        fig, axes = plt.subplots(1, 5, figsize=(22, 4))
+
+        for ax, matrix, cls_name in zip(axes, mcm, CLASSES):
+            sns.heatmap(matrix, annot=True, fmt='d', cmap='Blues', cbar=False, ax=ax)
+            ax.set_title(f'Klasa: {cls_name}', fontsize=12)
+            ax.set_xlabel('Predykcja')
+            ax.set_ylabel('Rzeczywistość')
+
+        plt.tight_layout()
+        out_img = models_dir / f"confusion_matrix_{name}.png"
+        plt.savefig(out_img, dpi=300)
+        plt.close(fig)
+        print(f" -> Macierz pomyłek zapisano jako wykres: {out_img.name}")
+
+    df_results = pd.DataFrame(results)
+    out_csv = models_dir / "iter1_detailed_evaluation.csv"
+    df_results.to_csv(out_csv, index=False)
+
+    print("\n" + "=" * 80)
+    print(f"Podsumowanie zapisano w: {out_csv}")
+    print("=" * 80)
+    print(df_results.to_string(index=False))
 
 if __name__ == '__main__':
     main()
