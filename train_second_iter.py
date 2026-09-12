@@ -48,11 +48,11 @@ def build_transfer_model(model_name, input_shape):
 
 def main():
     base_dir = Path(__file__).resolve().parent
-    h5_path = base_dir / 'data' / 'processed' / 'cwt_scalograms_CROPPED.h5'
-
     out_dir = base_dir / 'models' / 'iter2'
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    kaggle_paths = list(Path('/kaggle/input').rglob('cwt_scalograms_FULL.h5'))
+    h5_path = kaggle_paths[0] if kaggle_paths else base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
     if not h5_path.exists():
         print(f"Brak pliku danych: {h5_path}")
         return
