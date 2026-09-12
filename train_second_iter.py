@@ -32,9 +32,9 @@ def build_transfer_model(model_name, input_shape):
     x = tf.keras.layers.Conv2D(3, (1, 1), activation='relu', name='channel_compressor')(inputs)
 
     if model_name == 'densenet121':
-        base_model = tf.keras.applications.DenseNet121(include_top=False, weights='imagenet', input_tensor=x)
+        base_model = tf.keras.applications.DenseNet121(include_top=False, weights='imagenet', input_shape=(input_shape[0], input_shape[1], 3))
     elif model_name == 'mobilenetv2':
-        base_model = tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet', input_tensor=x)
+        base_model = tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet', input_shape=(input_shape[0], input_shape[1], 3))
     else:
         raise ValueError("Nieznany model transferowy.")
 
@@ -42,7 +42,9 @@ def build_transfer_model(model_name, input_shape):
     for layer in base_model.layers[:-30]:
         layer.trainable = False
 
-    out = tf.keras.layers.GlobalAveragePooling2D()(base_model.output)
+    x = base_model(x)
+
+    out = tf.keras.layers.GlobalAveragePooling2D()(x)
     out = tf.keras.layers.Dropout(0.3)(out)
     outputs = tf.keras.layers.Dense(NUM_CLASSES, activation='sigmoid')(out)
     return tf.keras.Model(inputs, outputs, name=model_name)
@@ -64,7 +66,8 @@ def main():
     train_gen = H5MemorySafeGenerator(h5_path, split='train', batch_size=batch_size, crop=True, crop_range=(50, 950))
     val_gen = H5MemorySafeGenerator(h5_path, split='val', batch_size=batch_size, crop=True, crop_range=(50, 950))
 
-    models_to_train = ['baseline', 'densenet121', 'mobilenetv2']
+    # models_to_train = ['baseline', 'densenet121', 'mobilenetv2']
+    models_to_train = ['densenet121', 'mobilenetv2']
     input_shape = (FREQ_STEPS, TIME_STEPS, CHANNELS)
 
     for m_name in models_to_train:
