@@ -4,6 +4,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 import tensorflow as tf
+import pickle
 from pathlib import Path
 from src.generator import H5MemorySafeGenerator
 
@@ -106,6 +107,10 @@ def main():
             epochs=epochs,
             callbacks=callbacks
         )
+
+        history_path = f'models/iter2/history_{m_name}_iter2.pkl'
+        with open(history_path, 'wb') as f:
+            pickle.dump(history.history, f)
 
         print(f"Zakończono trening {m_name.upper()}. Zapisano w {out_dir}")
 
