@@ -108,7 +108,7 @@ def main():
             callbacks=callbacks
         )
 
-        history_path = f'models/iter2/history_{m_name}_iter2.pkl'
+        history_path = out_dir / f'history_{m_name}_iter2.pkl'
         with open(history_path, 'wb') as f:
             pickle.dump(history.history, f)
 
