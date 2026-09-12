@@ -4,33 +4,12 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 import argparse
 import pickle
-import h5py
-import numpy as np
 from pathlib import Path
 import tensorflow as tf
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
-
 from src.baseline_cnn import build_baseline_cnn
 from src.transfer_models import build_transfer_model
-
-class H5MemorySafeGenerator(tf.keras.utils.Sequence):
-    def __init__(self, h5_path, split, batch_size=32):
-        self.h5_path = h5_path
-        self.split = split
-        self.batch_size = batch_size
-        with h5py.File(self.h5_path, 'r') as f:
-            self.length = len(f[self.split]['y'])
-
-    def __len__(self):
-        return int(np.ceil(self.length / self.batch_size))
-
-    def __getitem__(self, idx):
-        with h5py.File(self.h5_path, 'r') as f:
-            start = idx * self.batch_size
-            end = min(start + self.batch_size, self.length)
-            X_batch = f[self.split]['X'][start:end]
-            y_batch = f[self.split]['y'][start:end]
-        return X_batch, y_batch
+from src.generator import H5MemorySafeGenerator
 
 def main():
     parser = argparse.ArgumentParser(description="Trening modeli na skalogramach CWT strumieniowo.")

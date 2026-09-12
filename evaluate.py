@@ -4,34 +4,15 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 import h5py
-import numpy as np
 import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 from sklearn.metrics import roc_auc_score, f1_score, recall_score, hamming_loss, multilabel_confusion_matrix
+from src.generator import H5MemorySafeGenerator
 
 CLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
-
-class H5MemorySafeGenerator(tf.keras.utils.Sequence):
-    def __init__(self, h5_path, split='test', batch_size=64):
-        self.h5_path = h5_path
-        self.split = split
-        self.batch_size = batch_size
-        with h5py.File(self.h5_path, 'r') as f:
-            self.length = len(f[self.split]['y'])
-
-    def __len__(self):
-        return int(np.ceil(self.length / self.batch_size))
-
-    def __getitem__(self, idx):
-        with h5py.File(self.h5_path, 'r') as f:
-            start = idx * self.batch_size
-            end = min(start + self.batch_size, self.length)
-            X_batch = f[self.split]['X'][start:end]
-            y_batch = f[self.split]['y'][start:end]
-        return X_batch, y_batch
 
 def main():
     base_dir = Path(__file__).resolve().parent
@@ -45,7 +26,7 @@ def main():
     with h5py.File(h5_path, 'r') as f:
         y_true = f['test']['y'][:]
 
-    test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64)
+    test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64, crop=True, crop_range=(50, 950)) 
 
     model_files = {
         'Baseline': models_dir / "best_baseline.keras",

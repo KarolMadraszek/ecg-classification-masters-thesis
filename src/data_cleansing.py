@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def clean_tabular_data(df_path, is_train=True, age_median_train=None):
     df = pd.read_csv(df_path, index_col='ecg_id', low_memory=False)
 

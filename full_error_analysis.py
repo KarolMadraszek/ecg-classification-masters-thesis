@@ -10,27 +10,9 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from src.generator import H5MemorySafeGenerator
 
 CLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
-
-class H5MemorySafeGenerator(tf.keras.utils.Sequence):
-    def __init__(self, h5_path, split='test', batch_size=64):
-        self.h5_path = h5_path
-        self.split = split
-        self.batch_size = batch_size
-        with h5py.File(self.h5_path, 'r') as f:
-            self.length = len(f[self.split]['y'])
-
-    def __len__(self):
-        return int(np.ceil(self.length / self.batch_size))
-
-    def __getitem__(self, idx):
-        with h5py.File(self.h5_path, 'r') as f:
-            start = idx * self.batch_size
-            end = min(start + self.batch_size, self.length)
-            X_batch = f[self.split]['X'][start:end]
-            y_batch = f[self.split]['y'][start:end]
-        return X_batch, y_batch
 
 def get_last_conv_layer(model):
     for layer in reversed(model.layers):

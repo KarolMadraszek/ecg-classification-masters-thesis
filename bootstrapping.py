@@ -10,32 +10,12 @@ import pandas as pd
 from pathlib import Path
 import tensorflow as tf
 from sklearn.metrics import roc_auc_score, f1_score
+from src.generator import H5MemorySafeGenerator
 
 CLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
 MODELS = ['baseline', 'mobilenetv2', 'densenet121', 'resnet50v2', 'efficientnetb0']
 N_BOOTSTRAP = 1000
 RND_SEED = 42
-
-
-class H5MemorySafeGenerator(tf.keras.utils.Sequence):
-    def __init__(self, h5_path, split='test', batch_size=64):
-        self.h5_path = h5_path
-        self.split = split
-        self.batch_size = batch_size
-        with h5py.File(self.h5_path, 'r') as f:
-            self.length = len(f[self.split]['y'])
-
-    def __len__(self):
-        return int(np.ceil(self.length / self.batch_size))
-
-    def __getitem__(self, idx):
-        with h5py.File(self.h5_path, 'r') as f:
-            start = idx * self.batch_size
-            end = min(start + self.batch_size, self.length)
-            X_batch = f[self.split]['X'][start:end]
-            y_batch = f[self.split]['y'][start:end]
-        return X_batch, y_batch
-
 
 def run_bootstrap(y_true, y_pred_prob, n_iterations=N_BOOTSTRAP, seed=RND_SEED):
     np.random.seed(seed)

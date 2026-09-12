@@ -12,7 +12,6 @@ import cv2
 
 CLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
 
-
 def get_last_conv_layer_name(model):
     for layer in reversed(model.layers):
         if isinstance(layer, tf.keras.layers.Conv2D):
