@@ -66,8 +66,8 @@ def main():
     train_gen = H5MemorySafeGenerator(h5_path, split='train', batch_size=batch_size, crop=True, crop_range=(50, 950))
     val_gen = H5MemorySafeGenerator(h5_path, split='val', batch_size=batch_size, crop=True, crop_range=(50, 950))
 
-    # models_to_train = ['baseline', 'densenet121', 'mobilenetv2']
-    models_to_train = ['densenet121', 'mobilenetv2']
+    models_to_train = ['baseline', 'densenet121', 'mobilenetv2']
+    # models_to_train = ['densenet121', 'mobilenetv2']
     input_shape = (FREQ_STEPS, TIME_STEPS, CHANNELS)
 
     for m_name in models_to_train:

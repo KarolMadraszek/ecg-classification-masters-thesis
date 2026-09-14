@@ -14,38 +14,37 @@ from src.generator import H5MemorySafeGenerator
 
 CLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
 
-def main():
-    base_dir = Path(__file__).resolve().parent
-    h5_path = base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
-    models_dir = base_dir / 'models'
+def run_evaluation(h5_path, models_dir, iter_name, crop, model_filenames):
+    print("\n" + "=" * 80)
+    print(f"Rozpoczęcie ewaluacji: {iter_name.upper()}")
+    print("=" * 80)
 
-    if not h5_path.exists():
-        print(f"Brak pliku danych: {h5_path}")
-        return
+    models_dir.mkdir(parents=True, exist_ok=True)
 
+    print(f"Pobieranie prawdziwych etykiet z: {h5_path}")
     with h5py.File(h5_path, 'r') as f:
         y_true = f['test']['y'][:]
 
-    test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64, crop=True, crop_range=(50, 950)) 
-
-    model_files = {
-        'Baseline': models_dir / "best_baseline.keras",
-        'DenseNet121': models_dir / "best_densenet121.keras",
-        'MobileNetV2': models_dir / "best_mobilenetv2.keras",
-        'ResNet50v2': models_dir / "best_resnet50v2.keras",
-        'EfficientNetB0': models_dir / "best_efficientnetb0.keras"
-    }
+    test_gen = H5MemorySafeGenerator(
+        h5_path,
+        split='test',
+        batch_size=64,
+        crop=crop,
+        crop_range=(50, 950) if crop else None
+    )
 
     results = []
 
-    for name, path in model_files.items():
+    for name, filename in model_filenames.items():
+        path = models_dir / filename
         if not path.exists():
-            print(f"Pominięto model {name}: brak pliku wag w {path}")
+            print(f" -> Pominięto model {name}: brak pliku wag w {path}")
             continue
 
-        print(f"Ewaluacja modelu: {name}")
+        print(f"\nEwaluacja modelu: {name}")
         model = tf.keras.models.load_model(path)
-        y_pred_prob = model.predict(test_gen, verbose=0)[:len(y_true)]
+
+        y_pred_prob = model.predict(test_gen, verbose=1)[:len(y_true)]
         y_pred_bin = (y_pred_prob >= 0.5).astype(int)
 
         auc = roc_auc_score(y_true, y_pred_prob, average='macro')
@@ -77,19 +76,62 @@ def main():
             ax.set_ylabel('Rzeczywistość')
 
         plt.tight_layout()
-        out_img = models_dir / f"confusion_matrix_{name}.png"
+        out_img = models_dir / f"confusion_matrix_{name}_{iter_name}.png"
         plt.savefig(out_img, dpi=300)
         plt.close(fig)
-        print(f" -> Macierz pomyłek zapisano jako wykres: {out_img.name}")
+        print(f" -> Zapisano macierze pomyłek: {out_img.name}")
+
+    if not results:
+        print(f"\nNie oceniono żadnego modelu dla {iter_name}.")
+        return
 
     df_results = pd.DataFrame(results)
-    out_csv = models_dir / "iter1_detailed_evaluation.csv"
+    out_csv = models_dir / f"{iter_name}_detailed_evaluation.csv"
     df_results.to_csv(out_csv, index=False)
 
     print("\n" + "=" * 80)
-    print(f"Podsumowanie zapisano w: {out_csv}")
+    print(f"Podsumowanie {iter_name} zapisano w: {out_csv}")
     print("=" * 80)
     print(df_results.to_string(index=False))
+
+def main():
+    base_dir = Path(__file__).resolve().parent
+    kaggle_paths = list(Path('/kaggle/input').rglob('cwt_scalograms_FULL.h5'))
+    h5_path = kaggle_paths[0] if kaggle_paths else base_dir / 'data' / 'processed' / 'cwt_scalograms_FULL.h5'
+
+    if not h5_path.exists():
+        print(f"Błąd: Brak pliku danych: {h5_path}")
+        return
+
+    models_iter1 = {
+        'Baseline': 'best_baseline.keras',
+        'DenseNet121': 'best_densenet121.keras',
+        'MobileNetV2': 'best_mobilenetv2.keras'
+    }
+
+    models_iter2 = {
+        'Baseline': 'best_baseline_iter2.keras',
+        'DenseNet121': 'best_densenet121_iter2.keras',
+        'MobileNetV2': 'best_mobilenetv2_iter2.keras'
+    }
+
+    run_evaluation(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter2',
+        iter_name='iter2',
+        crop=True,
+        model_filenames=models_iter2
+    )
+
+    """   Dla 1. iteracji
+    run_evaluation(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models',
+        iter_name='iter1',
+        crop=False,
+        model_filenames=models_iter1
+    )
+    """
 
 if __name__ == '__main__':
     main()
