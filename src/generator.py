@@ -55,8 +55,8 @@ class H5MemorySafeGenerator(tf.keras.utils.Sequence):
         batch_indices = np.sort(batch_indices)
 
         with h5py.File(self.h5_path, 'r') as f:
-            X_batch = f[self.split]['X'][batch_indices]
-            y_batch = f[self.split]['y'][batch_indices]
+            X_batch = np.array(f[self.split]['X'][batch_indices], dtype=np.float32)
+            y_batch = np.array(f[self.split]['y'][batch_indices], dtype=np.float32)
 
         if self.crop:
             start, end = self.crop_range

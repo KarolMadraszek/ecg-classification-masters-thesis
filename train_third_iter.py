@@ -1,5 +1,10 @@
-import argparse
 import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
+import argparse
 import h5py
 import numpy as np
 import tensorflow as tf
@@ -144,7 +149,9 @@ if __name__ == '__main__':
         train_gen,
         validation_data=val_gen,
         epochs=args.epochs,
-        callbacks=callbacks
+        workers=1,
+        callbacks=callbacks,
+        use_multiprocessing=False
     )
 
     history_path = MODEL_DIR / f'history_{args.model}_iter3.pkl'
