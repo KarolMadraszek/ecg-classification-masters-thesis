@@ -19,6 +19,9 @@ os.makedirs(MODEL_DIR, exist_ok=True)
 
 CLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
 NUM_CLASSES = len(CLASSES)
+TIME_STEPS = 900
+FREQ_STEPS = 39
+CHANNELS = 12
 
 def get_positive_weights(h5_path, split='train'):
     with h5py.File(h5_path, 'r') as f:
@@ -49,8 +52,7 @@ def weighted_binary_crossentropy(pos_weights):
         return tf.reduce_mean(bce, axis=-1)
     return custom_loss
 
-
-def build_baseline_cnn(input_shape=(None, None, 12)):
+def build_baseline_cnn(input_shape):
     inputs = tf.keras.Input(shape=input_shape)
     x = tf.keras.layers.Conv2D(
         32, (3, 3), padding='same', activation='relu',
@@ -67,8 +69,9 @@ def build_baseline_cnn(input_shape=(None, None, 12)):
     outputs = tf.keras.layers.Dense(NUM_CLASSES, activation='sigmoid')(x)
     return tf.keras.Model(inputs=inputs, outputs=outputs)
 
-def build_transfer_model(model_name, input_shape=(None, None, 12)):
+def build_transfer_model(model_name):
     model_name = model_name.lower()
+    input_shape = (FREQ_STEPS, TIME_STEPS, CHANNELS)
 
     if model_name == 'baseline':
         return build_baseline_cnn(input_shape)

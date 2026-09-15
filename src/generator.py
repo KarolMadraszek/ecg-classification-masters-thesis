@@ -1,7 +1,7 @@
 import h5py
 import numpy as np
 import tensorflow as tf
-from tqdm import tqdm
+
 
 def create_tukey_window(length, alpha=0.1):
     n = np.arange(length)
@@ -14,9 +14,10 @@ def create_tukey_window(length, alpha=0.1):
 
 
 class H5MemorySafeGenerator(tf.keras.utils.Sequence):
-    def __init__(self, h5_path, split, batch_size=32, shuffle=False,
+    def __init__(self, h5_path, split, batch_size=32, shuffle=True,
                  crop=False, crop_range=(50, 950),
                  taper_edges=False, freq_masking=False):
+        self.h5_path = str(h5_path)
         self.split = split
         self.batch_size = batch_size
         self.shuffle = shuffle
@@ -25,23 +26,10 @@ class H5MemorySafeGenerator(tf.keras.utils.Sequence):
         self.taper_edges = taper_edges
         self.freq_masking = freq_masking
 
-        with h5py.File(str(h5_path), 'r') as f:
-            total_samples = f[self.split]['X'].shape[0]
-            orig_shape = f[self.split]['X'].shape
+        with h5py.File(self.h5_path, 'r') as f:
+            self.total_samples = f[self.split]['y'].shape[0]
 
-            print(f"[{split.upper()}] Alokacja bufora RAM dla {total_samples} próbek...")
-            self.X_data = np.empty(orig_shape, dtype=np.float32)
-            self.y_data = np.array(f[self.split]['y'], dtype=np.float32)
-
-            chunk_size = 512
-            for i in tqdm(range(0, total_samples, chunk_size), desc=f"Wczytywanie {split.upper()} do RAM"):
-                end = min(i + chunk_size, total_samples)
-                self.X_data[i:end] = f[self.split]['X'][i:end]
-
-        self.num_samples = total_samples
-        self.indices = np.arange(self.num_samples)
-        if self.shuffle:
-            np.random.shuffle(self.indices)
+        self.f = h5py.File(self.h5_path, 'r')
 
         self.tukey_window = None
         if self.taper_edges:
@@ -49,17 +37,23 @@ class H5MemorySafeGenerator(tf.keras.utils.Sequence):
             self.tukey_window = create_tukey_window(length, alpha=0.1).reshape(1, 1, -1, 1)
 
     def __len__(self):
-        return int(np.ceil(self.num_samples / float(self.batch_size)))
+        return int(np.ceil(self.total_samples / float(self.batch_size)))
 
     def __getitem__(self, idx):
-        batch_indices = self.indices[idx * self.batch_size : (idx + 1) * self.batch_size]
+        start = idx * self.batch_size
+        end = min(start + self.batch_size, self.total_samples)
 
-        X_batch = self.X_data[batch_indices].copy()
-        y_batch = self.y_data[batch_indices]
+        X_batch = np.array(self.f[self.split]['X'][start:end], dtype=np.float32)
+        y_batch = np.array(self.f[self.split]['y'][start:end], dtype=np.float32)
+
+        if self.shuffle:
+            perm = np.random.permutation(len(X_batch))
+            X_batch = X_batch[perm]
+            y_batch = y_batch[perm]
 
         if self.crop:
-            start, end = self.crop_range
-            X_batch = X_batch[:, :, start:end, :]
+            s, e = self.crop_range
+            X_batch = X_batch[:, :, s:e, :]
 
         if self.taper_edges and self.tukey_window is not None:
             X_batch = X_batch * self.tukey_window
@@ -70,8 +64,7 @@ class H5MemorySafeGenerator(tf.keras.utils.Sequence):
         return X_batch, y_batch
 
     def on_epoch_end(self):
-        if self.shuffle:
-            np.random.shuffle(self.indices)
+        pass
 
     def _apply_freq_mask(self, X_batch, max_mask_pct=0.15):
         n_freq = X_batch.shape[1]
@@ -81,3 +74,10 @@ class H5MemorySafeGenerator(tf.keras.utils.Sequence):
                 mask_start = np.random.randint(0, n_freq - mask_size)
                 X_batch[i, mask_start: mask_start + mask_size, :, :] = 0.0
         return X_batch
+
+    def __del__(self):
+        if hasattr(self, 'f') and self.f:
+            try:
+                self.f.close()
+            except Exception:
+                pass
