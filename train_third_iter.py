@@ -1,13 +1,14 @@
 import os
+import tensorflow as tf
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+print("Dostępne urządzenia fizyczne:", tf.config.list_physical_devices('GPU'))
 
 import argparse
 import h5py
 import numpy as np
-import tensorflow as tf
 import pickle
 from src.generator import H5MemorySafeGenerator
 from pathlib import Path
@@ -149,9 +150,7 @@ if __name__ == '__main__':
         train_gen,
         validation_data=val_gen,
         epochs=args.epochs,
-        workers=1,
-        callbacks=callbacks,
-        use_multiprocessing=False
+        callbacks=callbacks
     )
 
     history_path = MODEL_DIR / f'history_{args.model}_iter3.pkl'
