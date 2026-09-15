@@ -7,7 +7,7 @@ import pickle
 from src.generator import H5MemorySafeGenerator
 from pathlib import Path
 
-H5_PATH = '/kaggle/input/cwt_scalograms_FULL.h5'
+H5_PATH = '/kaggle/input/datasets/karolmadraszek/ptbxl-cwt-scalograms/cwt_scalograms_FULL.h5'
 MODEL_DIR = Path('/kaggle/working/project/models')
 os.makedirs(MODEL_DIR, exist_ok=True)
 

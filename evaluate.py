@@ -42,7 +42,7 @@ def run_evaluation(h5_path, models_dir, iter_name, crop, model_filenames):
             continue
 
         print(f"\nEwaluacja modelu: {name}")
-        model = tf.keras.models.load_model(path)
+        model = tf.keras.models.load_model(path, compile=False)
 
         y_pred_prob = model.predict(test_gen, verbose=1)[:len(y_true)]
         y_pred_bin = (y_pred_prob >= 0.5).astype(int)
@@ -81,6 +81,9 @@ def run_evaluation(h5_path, models_dir, iter_name, crop, model_filenames):
         plt.close(fig)
         print(f" -> Zapisano macierze pomyłek: {out_img.name}")
 
+        del model
+        tf.keras.backend.clear_session()
+
     if not results:
         print(f"\nNie oceniono żadnego modelu dla {iter_name}.")
         return
@@ -94,6 +97,7 @@ def run_evaluation(h5_path, models_dir, iter_name, crop, model_filenames):
     print("=" * 80)
     print(df_results.to_string(index=False))
 
+
 def main():
     base_dir = Path(__file__).resolve().parent
     kaggle_paths = list(Path('/kaggle/input').rglob('cwt_scalograms_FULL.h5'))
@@ -103,6 +107,7 @@ def main():
         print(f"Błąd: Brak pliku danych: {h5_path}")
         return
 
+    # Słowniki modeli dla poprzednich iteracji
     models_iter1 = {
         'Baseline': 'best_baseline.keras',
         'DenseNet121': 'best_densenet121.keras',
@@ -115,13 +120,11 @@ def main():
         'MobileNetV2': 'best_mobilenetv2_iter2.keras'
     }
 
-    run_evaluation(
-        h5_path=h5_path,
-        models_dir=base_dir / 'models' / 'iter2',
-        iter_name='iter2',
-        crop=True,
-        model_filenames=models_iter2
-    )
+    models_iter3 = {
+        'Baseline': 'best_iter3_baseline.keras',
+        'DenseNet121': 'best_iter3_densenet121.keras',
+        'MobileNetV2': 'best_iter3_mobilenetv2.keras'
+    }
 
     """   Dla 1. iteracji
     run_evaluation(
@@ -132,6 +135,24 @@ def main():
         model_filenames=models_iter1
     )
     """
+
+    """  Dla 2. iteracji
+    run_evaluation(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter2',
+        iter_name='iter2',
+        crop=True,
+        model_filenames=models_iter2
+    )
+    """
+
+    run_evaluation(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter3',
+        iter_name='iter3',
+        crop=True,
+        model_filenames=models_iter3
+    )
 
 if __name__ == '__main__':
     main()
