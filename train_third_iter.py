@@ -86,12 +86,10 @@ def build_transfer_model(model_name):
 
     x = tf.keras.layers.SpatialDropout2D(0.2, name='spatial_dropout')(x)
 
-    base_input_shape = (input_shape[0], input_shape[1], 3)
-
     if model_name == 'densenet121':
-        base_model = tf.keras.applications.DenseNet121(include_top=False, weights='imagenet', input_tensor=base_input_shape)
+        base_model = tf.keras.applications.DenseNet121(include_top=False, weights='imagenet')
     elif model_name == 'mobilenetv2':
-        base_model = tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet', input_tensor=base_input_shape)
+        base_model = tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet')
     else:
         raise ValueError(f"Nieobsługiwany model: {model_name}. Należy wybrać: baseline, densenet121 lub mobilenetv2.")
 
