@@ -86,14 +86,16 @@ def build_transfer_model(model_name):
 
     x = tf.keras.layers.SpatialDropout2D(0.2, name='spatial_dropout')(x)
 
-    if model_name == 'densenet121':
-        base_model = tf.keras.applications.DenseNet121(include_top=False, weights='imagenet', input_tensor=x)
-    elif model_name == 'mobilenetv2':
-        base_model = tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet', input_tensor=x)
-    else:
-        raise ValueError(f"Nieobsługiwany model: {model_name}. Wybierz: baseline, densenet121 lub mobilenetv2.")
+    base_input_shape = (input_shape[0], input_shape[1], 3)
 
-    x = base_model.output
+    if model_name == 'densenet121':
+        base_model = tf.keras.applications.DenseNet121(include_top=False, weights='imagenet', input_tensor=base_input_shape)
+    elif model_name == 'mobilenetv2':
+        base_model = tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet', input_tensor=base_input_shape)
+    else:
+        raise ValueError(f"Nieobsługiwany model: {model_name}. Należy wybrać: baseline, densenet121 lub mobilenetv2.")
+
+    x = base_model(x)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
     outputs = tf.keras.layers.Dense(NUM_CLASSES, activation='sigmoid')(x)
     return tf.keras.Model(inputs=inputs, outputs=outputs)
