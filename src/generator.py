@@ -11,6 +11,7 @@ def create_tukey_window(length, alpha=0.1):
         w[-width:] = 0.5 * (1.0 + np.cos(np.pi * (-2.0 + 2.0 * (length - 1 - n[-width:]) / (2.0 * width))))
     return w
 
+
 class H5MemorySafeGenerator(tf.keras.utils.Sequence):
     def __init__(self, h5_path, split, batch_size=32, shuffle=True,
                  crop=False, crop_range=(50, 950),

@@ -47,10 +47,11 @@ def build_transfer_model(model_name, input_shape):
     for layer in base_model.layers[:-30]:
         layer.trainable = False
 
-    out = tf.keras.layers.GlobalAveragePooling2D()(base_model.output)
+    x = base_model(x)
+
+    out = tf.keras.layers.GlobalAveragePooling2D()(x)
     out = tf.keras.layers.Dropout(0.3)(out)
     outputs = tf.keras.layers.Dense(NUM_CLASSES, activation='sigmoid')(out)
-
     return tf.keras.Model(inputs, outputs, name=model_name)
 
 
@@ -115,7 +116,8 @@ def main():
 
     batch_size = 64
 
-    models_to_train = ['baseline', 'mobilenetv2', 'densenet121']
+    # models_to_train = ['baseline', 'mobilenetv2', 'densenet121']
+    models_to_train = ['mobilenetv2', 'densenet121']
 
     train_gen = H5MemorySafeGenerator(
         H5_PATH,
