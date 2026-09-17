@@ -65,7 +65,7 @@ def run_error_analysis(h5_path, models_dir, iter_name, crop, model_filenames):
             print(f" -> Brak modelu: {model_path}. Pominięto.")
             continue
         print(f" -> Ładowanie wag: {m_name}")
-        loaded_models[m_name] = tf.keras.models.load_model(model_path)
+        loaded_models[m_name] = tf.keras.models.load_model(model_path, compile=False)
 
     if not loaded_models:
         print(f"Nie załadowano modeli dla {iter_name}.")
@@ -175,9 +175,27 @@ def main():
         'MobileNetV2': 'best_mobilenetv2_iter2.keras'
     }
 
+    models_iter3 = {
+        'Baseline': 'best_baseline_iter3.keras',
+        'DenseNet121': 'best_densenet121_iter3.keras',
+        'MobileNetV2': 'best_mobilenetv2_iter3.keras'
+    }
+
+    # ==========================================
+    # WYKONANIE DLA ITERACJI 3
+    # ==========================================
+    run_error_analysis(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter3',
+        iter_name='iter3',
+        crop=True,
+        model_filenames=models_iter3
+    )
+
     # ==========================================
     # WYKONANIE DLA ITERACJI 2
     # ==========================================
+    """
     run_error_analysis(
         h5_path=h5_path,
         models_dir=base_dir / 'models' / 'iter2',
@@ -185,6 +203,7 @@ def main():
         crop=True,
         model_filenames=models_iter2
     )
+    """
 
     # ==========================================
     # WYKONANIE DLA ITERACJI 1

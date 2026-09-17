@@ -80,7 +80,7 @@ def process_iteration(h5_path, models_dir, iter_name, crop, model_filenames, y_t
             continue
 
         print(f"\n--- Ewaluacja: {model_name} ---")
-        model = tf.keras.models.load_model(model_file)
+        model = tf.keras.models.load_model(model_file, compile=False)
 
         y_pred_prob = model.predict(test_gen, verbose=1)
         y_pred_prob = y_pred_prob[:len(y_true)]
@@ -144,17 +144,36 @@ def main():
         'MobileNetV2': 'best_mobilenetv2_iter2.keras'
     }
 
+    # Słownik modeli dla Iteracji 3
+    models_iter3 = {
+        'Baseline': 'best_baseline_iter3.keras',
+        'DenseNet121': 'best_densenet121_iter3.keras',
+        'MobileNetV2': 'best_mobilenetv2_iter3.keras'
+    }
+
+    # ==========================================
+    # WYKONANIE DLA ITERACJI 3
+    # ==========================================
+    process_iteration(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter3',
+        iter_name='iter3',
+        crop=True,
+        model_filenames=models_iter3,
+        y_true=y_true
+    )
+
     # ==========================================
     # WYKONANIE DLA ITERACJI 2
     # ==========================================
-    process_iteration(
+    """process_iteration(
         h5_path=h5_path,
         models_dir=base_dir / 'models' / 'iter2',
         iter_name='iter2',
         crop=True,
         model_filenames=models_iter2,
         y_true=y_true
-    )
+    )"""
 
     # ==========================================
     # WYKONANIE DLA ITERACJI 1

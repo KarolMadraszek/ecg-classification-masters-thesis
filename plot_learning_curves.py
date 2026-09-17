@@ -52,13 +52,8 @@ def main():
 
     configurations = [
         {
-            'iter_name': 'iter1',
-            'folder': models_dir,
-            'models': ['baseline', 'resnet50v2', 'efficientnetb0', 'mobilenetv2', 'densenet121']
-        },
-        {
-            'iter_name': 'iter2',
-            'folder': models_dir / 'iter2',
+            'iter_name': 'iter3',
+            'folder': models_dir / 'iter3',
             'models': ['baseline', 'densenet121', 'mobilenetv2']
         }
     ]

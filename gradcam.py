@@ -12,7 +12,6 @@ import cv2
 
 CLASSES = ['NORM', 'MI', 'STTC', 'CD', 'HYP']
 
-
 def make_gradcam_heatmap(img_array, model, pred_index=None):
     last_conv_output = None
     for layer in model.layers:
@@ -64,7 +63,7 @@ def generate_gradcam_for_iteration(h5_path, models_dir, iter_name, crop, model_f
             continue
 
         print(f" -> Ładowanie wag: {m_name}")
-        model = tf.keras.models.load_model(model_path)
+        model = tf.keras.models.load_model(model_path, compile=False)
         loaded_models[m_name] = model
 
     if not loaded_models:
@@ -140,9 +139,27 @@ def main():
         'MobileNetV2': 'best_mobilenetv2_iter2.keras'
     }
 
+    models_iter3 = {
+        'Baseline': 'best_baseline_iter3.keras',
+        'DenseNet121': 'best_densenet121_iter3.keras',
+        'MobileNetV2': 'best_mobilenetv2_iter3.keras'
+    }
+
+    # ==========================================
+    # WYKONANIE DLA ITERACJI 3
+    # ==========================================
+    generate_gradcam_for_iteration(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter3',
+        iter_name='iter3',
+        crop=True,
+        model_filenames=models_iter3
+    )
+
     # ==========================================
     # WYKONANIE DLA ITERACJI 2
     # ==========================================
+    """
     generate_gradcam_for_iteration(
         h5_path=h5_path,
         models_dir=base_dir / 'models' / 'iter2',
@@ -150,6 +167,7 @@ def main():
         crop=True,
         model_filenames=models_iter2
     )
+    """
 
     # ==========================================
     # WYKONANIE DLA ITERACJI 1

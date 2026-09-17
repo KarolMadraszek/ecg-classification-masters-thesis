@@ -121,9 +121,9 @@ def main():
     }
 
     models_iter3 = {
-        'Baseline': 'best_iter3_baseline.keras',
-        'DenseNet121': 'best_iter3_densenet121.keras',
-        'MobileNetV2': 'best_iter3_mobilenetv2.keras'
+        'Baseline': 'best_baseline_iter3.keras',
+        'DenseNet121': 'best_densenet121_iter3.keras',
+        'MobileNetV2': 'best_mobilenetv2_iter3.keras'
     }
 
     """   Dla 1. iteracji
