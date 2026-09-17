@@ -37,9 +37,9 @@ def build_transfer_model(model_name, input_shape):
     x = tf.keras.layers.Conv2D(3, (1, 1), activation='relu', name='channel_compressor')(inputs)
 
     if model_name == 'densenet121':
-        base_model = tf.keras.applications.DenseNet121(include_top=False, weights='imagenet', input_tensor=(input_shape[0], input_shape[1], 3))
+        base_model = tf.keras.applications.DenseNet121(include_top=False, weights='imagenet', input_shape=(input_shape[0], input_shape[1], 3))
     elif model_name == 'mobilenetv2':
-        base_model = tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet', input_tensor=(input_shape[0], input_shape[1], 3))
+        base_model = tf.keras.applications.MobileNetV2(include_top=False, weights='imagenet', input_shape=(input_shape[0], input_shape[1], 3))
     else:
         raise ValueError("Nieznany model transferowy.")
 
