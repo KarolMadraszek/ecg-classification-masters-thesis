@@ -63,7 +63,10 @@ class H5MemorySafeGenerator(tf.keras.utils.Sequence):
         return X_batch, y_batch
 
     def on_epoch_end(self):
-        pass
+        if self.shuffle:
+            np.random.shuffle(self.indexes)
+        else:
+            self.indexes = np.arange(self.total_samples)
 
     def _apply_freq_mask(self, X_batch, max_mask_pct=0.15):
         n_freq = X_batch.shape[1]

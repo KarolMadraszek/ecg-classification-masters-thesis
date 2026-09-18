@@ -72,9 +72,12 @@ def run_error_analysis(h5_path, models_dir, iter_name, crop, model_filenames):
         return
 
     if crop:
-        test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64, crop=True, crop_range=(50, 950))
+        test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64, crop=True, crop_range=(50, 950), shuffle=False)
     else:
-        test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64)
+        test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64, shuffle=False)
+
+    if hasattr(test_gen, 'on_epoch_end'):
+        test_gen.on_epoch_end()
 
     preds = {}
     print("Generowanie predykcji")
@@ -86,7 +89,6 @@ def run_error_analysis(h5_path, models_dir, iter_name, crop, model_filenames):
     records = []
     for cls_idx, cls_name in enumerate(CLASSES):
         yt = y_true[:, cls_idx]
-
         model_errors = {m_name: np.abs(yt - preds[m_name][:, cls_idx]) for m_name in loaded_models}
 
         # Błąd wspólny (ang. joint error) to iloczyn błędów wszystkich analizowanych modeli
@@ -154,7 +156,6 @@ def run_error_analysis(h5_path, models_dir, iter_name, crop, model_filenames):
     tf.keras.backend.clear_session()
     gc.collect()
 
-
 def main():
     base_dir = Path(__file__).resolve().parent
     kaggle_paths = list(Path('/kaggle/input').rglob('cwt_scalograms_FULL.h5'))
@@ -181,9 +182,27 @@ def main():
         'MobileNetV2': 'best_mobilenetv2_iter3.keras'
     }
 
+    models_iter4 = {
+        'Baseline': 'baseline_best_iter4.keras',
+        'DenseNet121': 'densenet121_best_iter4.keras',
+        'MobileNetV2': 'mobilenetv2_best_iter4.keras'
+    }
+
+    # ==========================================
+    # WYKONANIE DLA ITERACJI 4
+    # ==========================================
+    run_error_analysis(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter4',
+        iter_name='iter4',
+        crop=True,
+        model_filenames=models_iter4
+    )
+
     # ==========================================
     # WYKONANIE DLA ITERACJI 3
     # ==========================================
+    """
     run_error_analysis(
         h5_path=h5_path,
         models_dir=base_dir / 'models' / 'iter3',
@@ -191,6 +210,7 @@ def main():
         crop=True,
         model_filenames=models_iter3
     )
+    """
 
     # ==========================================
     # WYKONANIE DLA ITERACJI 2

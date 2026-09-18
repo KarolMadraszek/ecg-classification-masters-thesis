@@ -55,7 +55,7 @@ def generate_gradcam_for_iteration(h5_path, models_dir, iter_name, crop, model_f
     models_dir.mkdir(parents=True, exist_ok=True)
     loaded_models = {}
 
-    print("Inicjalizacja modeli w pamięci...")
+    print("Inicjalizacja modeli w pamięci")
     for m_name, filename in model_filenames.items():
         model_path = models_dir / filename
         if not model_path.exists():
@@ -118,6 +118,8 @@ def generate_gradcam_for_iteration(h5_path, models_dir, iter_name, crop, model_f
             plt.close(fig)
             print(f"  > Zapisano wizualizację do: {out_img.name}")
 
+    tf.keras.backend.clear_session()
+
 def main():
     base_dir = Path(__file__).resolve().parent
 
@@ -145,9 +147,27 @@ def main():
         'MobileNetV2': 'best_mobilenetv2_iter3.keras'
     }
 
+    models_iter4 = {
+        'Baseline': 'baseline_best_iter4.keras',
+        'DenseNet121': 'densenet121_best_iter4.keras',
+        'MobileNetV2': 'mobilenetv2_best_iter4.keras'
+    }
+
+    # ==========================================
+    # WYKONANIE DLA ITERACJI 4
+    # ==========================================
+    generate_gradcam_for_iteration(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter4',
+        iter_name='iter4',
+        crop=True,
+        model_filenames=models_iter4
+    )
+
     # ==========================================
     # WYKONANIE DLA ITERACJI 3
     # ==========================================
+    """
     generate_gradcam_for_iteration(
         h5_path=h5_path,
         models_dir=base_dir / 'models' / 'iter3',
@@ -155,6 +175,7 @@ def main():
         crop=True,
         model_filenames=models_iter3
     )
+    """
 
     # ==========================================
     # WYKONANIE DLA ITERACJI 2

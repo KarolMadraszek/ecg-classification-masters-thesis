@@ -69,9 +69,12 @@ def process_iteration(h5_path, models_dir, iter_name, crop, model_filenames, y_t
     results = []
 
     if crop:
-        test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64, crop=True, crop_range=(50, 950))
+        test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64, crop=True, crop_range=(50, 950), shuffle=False)
     else:
-        test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64)
+        test_gen = H5MemorySafeGenerator(h5_path, split='test', batch_size=64, shuffle=False)
+
+    if hasattr(test_gen, 'on_epoch_end'):
+        test_gen.on_epoch_end()
 
     for model_name, filename in model_filenames.items():
         model_file = models_dir / filename
@@ -151,17 +154,36 @@ def main():
         'MobileNetV2': 'best_mobilenetv2_iter3.keras'
     }
 
+    # Słownik modeli dla Iteracji 4
+    models_iter4 = {
+        'Baseline': 'baseline_best_iter4.keras',
+        'DenseNet121': 'densenet121_best_iter4.keras',
+        'MobileNetV2': 'mobilenetv2_best_iter4.keras'
+    }
+
+    # ==========================================
+    # WYKONANIE DLA ITERACJI 4
+    # ==========================================
+    process_iteration(
+        h5_path=h5_path,
+        models_dir=base_dir / 'models' / 'iter4',
+        iter_name='iter4',
+        crop=True,
+        model_filenames=models_iter4,
+        y_true=y_true
+    )
+
     # ==========================================
     # WYKONANIE DLA ITERACJI 3
     # ==========================================
-    process_iteration(
+    """process_iteration(
         h5_path=h5_path,
         models_dir=base_dir / 'models' / 'iter3',
         iter_name='iter3',
         crop=True,
         model_filenames=models_iter3,
         y_true=y_true
-    )
+    )"""
 
     # ==========================================
     # WYKONANIE DLA ITERACJI 2
